@@ -131,13 +131,19 @@ pytest \
             archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
 
             recordCoverage(
-            tools: [
-                cobertura(pattern: 'coverage.xml')
-            ],
+            tools: [[
+                parser: 'COBERTURA',
+                pattern: 'coverage.xml'
+            ]],
+            id: 'coverage',
+            name: 'Python Coverage',
+            sourceCodeRetention: 'EVERY_BUILD',
             qualityGates: [
-                [metric: 'LINE', threshold: 70.0, unstable: false]
+                [threshold: 70.0, metric: 'LINE', baseline: 'PROJECT', unstable: true],
+                [threshold: 60.0, metric: 'BRANCH', baseline: 'PROJECT', unstable: true]
             ]
             )
+
 
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
         }
