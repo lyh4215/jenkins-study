@@ -29,6 +29,7 @@ pipeline {
                 . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r app/requirements.txt --cache-dir .pip-cache
+                pip install pytest pytest-cov
                 '''
             }
         }
@@ -60,7 +61,7 @@ pytest
             }
         }
 
-        stage('Main Branch Tests') {
+        stage('Main Branch Tests & Coverage') {
             when {
                 allOf {
                     branch 'main'
@@ -72,7 +73,11 @@ pytest
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
 . app/venv/bin/activate
-pytest --junitxml=reports/junit.xml
+pytest \
+--junitxml=reports/junit.xml \
+--cov=app \
+--cov-report=xml \
+--cov-report=term
         '''
             }
         }
@@ -123,6 +128,8 @@ pytest --junitxml=reports/junit.xml
         }
         always {
             archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
+
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
         }
         aborted {
