@@ -130,15 +130,12 @@ pytest \
             archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
             archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
 
-            
             recordCoverage(
             tools: [
-                cobertura(
-                pattern: 'coverage.xml'
-                )
+                cobertura(pattern: 'coverage.xml')
             ],
-            globalThresholds: [
-                lineCoverage: 70
+            qualityGates: [
+                [metric: 'LINE', threshold: 70.0, unstable: false]
             ]
             )
 
