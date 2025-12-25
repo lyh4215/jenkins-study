@@ -10,7 +10,7 @@ pipeline {
 
         stage('Setup Python') {
             steps {
-                dir('fastapi') {
+                dir('app') {
                     sh '''
                     python --version
                     python -m venv venv
