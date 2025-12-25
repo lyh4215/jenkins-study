@@ -40,7 +40,7 @@ EOF
             steps {
                 sh '''
                 set -euo pipefail
-                . venv/bin/activate
+                . app/venv/bin/activate
                 pytest
                 '''
             }
