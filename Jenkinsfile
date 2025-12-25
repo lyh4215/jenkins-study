@@ -53,5 +53,18 @@ pytest --junitxml=reports/junit.xml
             }
         }
 
+        stage('Deploy (Fake)') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.currentResult == 'SUCCESS' }
+                }
+            }
+            steps {
+                echo '🚀 Deploying application to production server (fake)'
+                echo '✅ Deployment completed'
+            }
+        }
+
     }
 }
