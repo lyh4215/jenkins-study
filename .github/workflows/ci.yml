@@ -25,15 +25,35 @@ jobs:
           . venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+        working-directory: app
 
       - name: Run tests (PR)
         if: github.event_name == 'pull_request'
         run: |
           . venv/bin/activate
           pytest tests/test_main.py
+        working-directory: app
 
       - name: Run tests (main)
         if: github.event_name == 'push'
         run: |
           . venv/bin/activate
-          pytest
+          pytest --junitxml=reports/junit.xml
+        working-directory: app
+
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v4
+        if: github.event_name == 'push'
+        with:
+          report_paths: reports/junit.xml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+
+    steps:
+      - run: echo "Deploying to production..."
