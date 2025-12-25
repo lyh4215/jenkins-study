@@ -39,10 +39,17 @@ EOF
         stage('Run Tests') {
             steps {
                 sh '''#!/usr/bin/env bash
-                set -euo pipefail
-                . app/venv/bin/activate
-                pytest
+set -euo pipefail
+. app/venv/bin/activate
+mkdir -p reports
+pytest --junitxml=reports/junit.xml
                 '''
+            }
+        }
+
+        stage('Test Report') {
+            steps {
+                junit 'reports/junit.xml'
             }
         }
 
