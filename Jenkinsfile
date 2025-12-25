@@ -36,26 +36,48 @@ EOF
             }
         }
 
-        stage('Run Tests') {
+        stage('PR Checks') {
+            when {
+                expression { env.CHANGE_ID != null }
+            }
             steps {
+                echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
 . app/venv/bin/activate
-mkdir -p reports
-pytest --junitxml=reports/junit.xml
-                '''
+pytest
+        '''
             }
         }
+
+        stage('Main Branch Tests') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { env.CHANGE_ID == null }
+                }
+            }
+            steps {
+                echo "🧪 Running full test suite on main"
+                sh '''#!/usr/bin/env bash
+set -euo pipefail
+. app/venv/bin/activate
+pytest --junitxml=reports/junit.xml
+        '''
+            }
+        }
+
+
 
         stage('Test Report') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { env.CHANGE_ID == null }
+                }
+            }
             steps {
                 junit 'reports/junit.xml'
-            }
-        }
-
-        stage('Debug Branch') {
-            steps {
-                echo "BRANCH_NAME = ${env.BRANCH_NAME}"
             }
         }
 
