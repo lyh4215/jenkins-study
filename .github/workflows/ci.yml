@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          . venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          . venv/bin/activate
+          pytest tests/test_main.py
+
+      - name: Run tests (main)
+        if: github.event_name == 'push'
+        run: |
+          . venv/bin/activate
+          pytest
