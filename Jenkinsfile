@@ -130,6 +130,18 @@ pytest \
             archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
             archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
 
+            
+            recordCoverage(
+            tools: [
+                cobertura(
+                pattern: 'coverage.xml'
+                )
+            ],
+            globalThresholds: [
+                lineCoverage: 70
+            ]
+            )
+
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
         }
         aborted {
