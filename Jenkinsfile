@@ -122,14 +122,12 @@ pytest --junitxml=reports/junit.xml
             echo '⚠️ Pipeline unstable'
         }
         always {
+            archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
         }
         aborted {
             echo '⛔ Deployment was aborted by user'
         }
 
-        always {
-            archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
-        }
     }
 }
