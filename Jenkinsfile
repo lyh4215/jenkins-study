@@ -25,7 +25,7 @@ pipeline {
         stage('FastAPI Import Test') {
             steps {
                 sh '''
-                . venv/bin/activate
+                . app/venv/bin/activate
                 python - <<EOF
 from app.main import app
 print("FastAPI app import OK")
