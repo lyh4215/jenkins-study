@@ -24,15 +24,13 @@ pipeline {
 
         stage('FastAPI Import Test') {
             steps {
-                dir('fastapi') {
-                    sh '''
-                    . venv/bin/activate
-                    python - <<EOF
-from app.main import app
+                sh '''
+                . venv/bin/activate
+                python - <<EOF
+from fastapi.main import app
 print("FastAPI app import OK")
 EOF
-                    '''
-                }
+                '''
             }
         }
     }
