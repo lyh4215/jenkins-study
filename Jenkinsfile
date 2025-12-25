@@ -53,6 +53,12 @@ pytest --junitxml=reports/junit.xml
             }
         }
 
+        stage('Debug Branch') {
+            steps {
+                echo "BRANCH_NAME = ${env.BRANCH_NAME}"
+            }
+        }
+
         stage('Deploy (Fake)') {
             when {
                 allOf {
