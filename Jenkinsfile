@@ -119,5 +119,8 @@ pytest --junitxml=reports/junit.xml
         always {
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
         }
+        aborted {
+            echo '⛔ Deployment was aborted by user'
+        }
     }
 }
