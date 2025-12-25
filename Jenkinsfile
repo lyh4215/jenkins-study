@@ -44,7 +44,7 @@ EOF
 
         stage('PR Checks') {
             when {
-                expression { env.CHANGE_ID != null }
+                expression { env.IS_PR == 'true' }
             }
             steps {
                 echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
@@ -60,7 +60,7 @@ pytest
             when {
                 allOf {
                     branch 'main'
-                    expression { env.CHANGE_ID == null }
+                    expression { env.IS_PR == 'false' }
                 }
             }
             steps {
@@ -79,7 +79,7 @@ pytest --junitxml=reports/junit.xml
             when {
                 allOf {
                     branch 'main'
-                    expression { env.CHANGE_ID == null }
+                    expression { env.IS_PR == 'false' }
                 }
             }
             steps {
@@ -92,6 +92,7 @@ pytest --junitxml=reports/junit.xml
                 allOf {
                     branch 'main'
                     expression { currentBuild.currentResult == 'SUCCESS' }
+                    expression { env.IS_PR == 'false' }
                 }
             }
             steps {
