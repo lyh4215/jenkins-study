@@ -28,9 +28,9 @@ pipeline {
                     sh '''
                     . venv/bin/activate
                     python - <<EOF
-    from app.main import app
-    print("FastAPI app import OK")
-    EOF
+from app.main import app
+print("FastAPI app import OK")
+EOF
                     '''
                 }
             }
