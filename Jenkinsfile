@@ -2,24 +2,30 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Init') {
             steps {
-                echo 'Checking out source code'
+                script {
+                    // PR 여부 판단 (GitHub + Gitea 모두 대응)
+                    env.IS_PR = (
+                        env.CHANGE_ID != null ||
+                        (env.BRANCH_NAME != null && env.BRANCH_NAME.startsWith('PR-'))
+                    ).toString()
+
+                    echo "BRANCH_NAME = ${env.BRANCH_NAME}"
+                    echo "CHANGE_ID   = ${env.CHANGE_ID}"
+                    echo "IS_PR       = ${env.IS_PR}"
+                }
             }
         }
 
         stage('Setup Python') {
             steps {
-                dir('app') {
-                    sh '''#!/usr/bin/env bash
-                    set -euo pipefail
-                    python --version
-                    python -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    '''
-                }
+                sh '''
+                python -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt --cache-dir .pip-cache
+                '''
             }
         }
 
@@ -94,5 +100,20 @@ pytest --junitxml=reports/junit.xml
             }
         }
 
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline succeeded'
+        }
+        failure {
+            echo '❌ Pipeline failed'
+        }
+        unstable {
+            echo '⚠️ Pipeline unstable'
+        }
+        always {
+            echo "🏁 Build finished with status: ${currentBuild.currentResult}"
+        }
     }
 }
