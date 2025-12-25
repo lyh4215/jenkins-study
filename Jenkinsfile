@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    
+    options {
+        timestamps()
+    }
 
     stages {
         stage('Init') {
@@ -122,6 +126,10 @@ pytest --junitxml=reports/junit.xml
         }
         aborted {
             echo '⛔ Deployment was aborted by user'
+        }
+
+        always {
+            archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
         }
     }
 }
