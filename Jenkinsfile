@@ -87,7 +87,7 @@ pytest --junitxml=reports/junit.xml
             }
         }
 
-        stage('Deploy (Fake)') {
+        stage('Deploy (Approval)') {
             when {
                 allOf {
                     branch 'main'
@@ -95,8 +95,12 @@ pytest --junitxml=reports/junit.xml
                 }
             }
             steps {
-                echo '🚀 Deploying application to production server (fake)'
-                echo '✅ Deployment completed'
+                script {
+                    input message: '🚀 Deploy to production?',
+                        ok: 'Deploy'
+                }
+
+                echo '🚀 Deploying application (fake)'
             }
         }
 
