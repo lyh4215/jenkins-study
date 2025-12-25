@@ -12,6 +12,7 @@ pipeline {
             steps {
                 dir('app') {
                     sh '''
+                    #!/usr/bin/env bash
                     set -euo pipefail
                     python --version
                     python -m venv venv
@@ -26,6 +27,7 @@ pipeline {
         stage('FastAPI Import Test') {
             steps {
                 sh '''
+                #!/usr/bin/env bash
                 set -euo pipefail
                 . app/venv/bin/activate
                 python - <<'EOF'
@@ -39,6 +41,7 @@ EOF
         stage('Run Tests') {
             steps {
                 sh '''
+                #!/usr/bin/env bash
                 set -euo pipefail
                 . app/venv/bin/activate
                 pytest
