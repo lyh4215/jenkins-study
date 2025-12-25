@@ -28,7 +28,7 @@ pipeline {
                 python -m venv venv
                 . venv/bin/activate
                 pip install --upgrade pip
-                pip install -r requirements.txt --cache-dir .pip-cache
+                pip install -r app/requirements.txt --cache-dir .pip-cache
                 '''
             }
         }
