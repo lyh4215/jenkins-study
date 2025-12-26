@@ -56,7 +56,11 @@ EOF
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
 . venv/bin/activate
-pytest
+
+pytest \
+--cov=app \
+--cov-report=xml \
+--cov-report=term
         '''
             }
         }
