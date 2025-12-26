@@ -38,7 +38,7 @@ pipeline {
             steps {
                 sh '''#!/usr/bin/env bash
                 set -euo pipefail
-                . app/venv/bin/activate
+                . venv/bin/activate
                 python - <<'EOF'
 from app.main import app
 print("FastAPI app import OK")
@@ -55,7 +55,7 @@ EOF
                 echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
-. app/venv/bin/activate
+. venv/bin/activate
 pytest
         '''
             }
@@ -72,7 +72,7 @@ pytest
                 echo "🧪 Running full test suite on main"
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
-. app/venv/bin/activate
+. venv/bin/activate
 pytest \
 --junitxml=reports/junit.xml \
 --cov=app \
