@@ -126,7 +126,7 @@ EOF
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: '08fe2f42-c728-41ba-8882-5808611a0798',
+                        credentialsId: 'classic-pat',
                         usernameVariable: 'GITHUB_USER',
                         passwordVariable: 'GITHUB_TOKEN'
                     )
