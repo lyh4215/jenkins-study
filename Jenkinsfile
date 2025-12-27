@@ -1,8 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'python:3.10-slim'
-            args '-u root:root'
+            image 'lyh4215/jenkins-ci-agent:latest'
         }
     }
     
