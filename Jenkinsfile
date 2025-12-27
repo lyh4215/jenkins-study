@@ -140,10 +140,16 @@ EOF
                     
                     // 3. 실행: ${GITHUB_TOKEN} 대신 \$GITHUB_TOKEN 을 써서 쉘 변수임을 명시 (보안 권장)
                     sh """
-                        curl -s -H "Authorization: token \$GITHUB_TOKEN" \
+# Python에서 환경변수(os.environ)를 읽어 JSON으로 직렬화
+        JSON_PAYLOAD=$(python3 - <<'EOF'
+import json, os
+data = {'body': os.environ['REPORT_DATA']}
+print(json.dumps(data))
+EOF
+                        curl -s -H "Authorization: token $GITHUB_TOKEN" \
                             -X POST \
                             -H "Content-Type: application/json" \
-                            -d '{"body": "${commentBody}"}' \
+                            -d '{"body": "$JSON_PAYLOAD"}' \
                             "${apiUrl}"
                     """
                     }
