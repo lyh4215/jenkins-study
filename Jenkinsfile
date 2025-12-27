@@ -128,14 +128,14 @@ EOF
                                                  passwordVariable: 'GITHUB_TOKEN', 
                                                  usernameVariable: 'GITHUB_APP_USER')]) {
                 script {
-                    // 1. Jenkins 변수를 미리 쉘 환경변수(env)에 할당
+// 1. 데이터 준비 (Groovy 영역)
+    def report = readFile('coverage.txt').trim()
+    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
     env.PR_NUMBER = env.CHANGE_ID
     env.REPO_PATH = "lyh4215/jenkins-study"
-    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
 
-    // 2. 이제 전체를 작은따옴표(''')로 감싸서 이스케이프 지옥에서 탈출!
+    // 2. 실행 (Shell 영역) - 작은따옴표 3개 사용
     sh '''
-        # 모든 $는 쉘 변수이므로 \를 붙일 필요가 없음
         JSON_PAYLOAD=$(python3 - <<'EOF'
 import json, os
 data = {'body': os.environ.get('REPORT_DATA', '')}
