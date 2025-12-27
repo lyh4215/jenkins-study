@@ -128,21 +128,24 @@ EOF
                                                  passwordVariable: 'GITHUB_TOKEN', 
                                                  usernameVariable: 'GITHUB_APP_USER')]) {
                 script {
-                        def report = readFile('coverage.txt').trim()
-                        // JSON body를 만들 때 shell escape를 방지하기 위해 별도 변수 처리
-                        def commentJson = """
-                        {
-                            "body": "### ✅ Coverage Report\\n\\n```\\n${report}\\n```"
-                        }
-                        """
-                        
-                        // GitHub API 호출
-                        sh """
-                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                                 -X POST \
-                                 -d '${commentJson}' \
-                                 "https://api.github.com/repos/${env.GIT_URL.tokenize(':/')[2].minus('.git')}/issues/${env.CHANGE_ID}/comments"
-                        """
+                    def report = readFile('coverage.txt').trim()
+                    
+                    // 1. URL 직접 지정 (가장 확실함)
+                    // 'lyh4215/your-repo-name' 부분을 실제 레포 이름으로 바꾸세요.
+                    def repoFullName = "lyh4215/jenkins-study" 
+                    def apiUrl = "https://api.github.com/repos/${repoFullName}/issues/${env.CHANGE_ID}/comments"
+                    
+                    // 2. JSON Body 생성 (Shell Injection 방지를 위해 single quote 사용)
+                    def commentBody = "### ✅ Coverage Report\n\n```\n${report}\n```"
+                    
+                    // 3. 실행: ${GITHUB_TOKEN} 대신 \$GITHUB_TOKEN 을 써서 쉘 변수임을 명시 (보안 권장)
+                    sh """
+                        curl -s -H "Authorization: token \$GITHUB_TOKEN" \
+                            -X POST \
+                            -H "Content-Type: application/json" \
+                            -d '{"body": "${commentBody}"}' \
+                            "${apiUrl}"
+                    """
                     }
                 }
             }
