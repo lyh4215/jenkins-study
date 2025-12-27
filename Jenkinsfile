@@ -149,7 +149,7 @@ EOF
                         curl -s -H "Authorization: token \$GITHUB_TOKEN" \
                             -X POST \
                             -H "Content-Type: application/json" \
-                            -d '{"body": "$JSON_PAYLOAD"}' \
+                            -d "$JSON_PAYLOAD" \
                             "${apiUrl}"
                     '''
                     }
