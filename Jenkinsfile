@@ -128,30 +128,27 @@ EOF
                                                  passwordVariable: 'GITHUB_TOKEN', 
                                                  usernameVariable: 'GITHUB_APP_USER')]) {
                 script {
-                    def report = readFile('coverage.txt').trim()
-                    
-                    // 1. URL 직접 지정 (가장 확실함)
-                    // 'lyh4215/your-repo-name' 부분을 실제 레포 이름으로 바꾸세요.
-                    def repoFullName = "lyh4215/jenkins-study" 
-                    def apiUrl = "https://api.github.com/repos/${repoFullName}/issues/${env.CHANGE_ID}/comments"
-                    
-                    // 2. JSON Body 생성 (Shell Injection 방지를 위해 single quote 사용)
-                    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
-                    
-                    // 3. 실행: ${GITHUB_TOKEN} 대신 \$GITHUB_TOKEN 을 써서 쉘 변수임을 명시 (보안 권장)
-                    sh '''
-                        JSON_PAYLOAD=$(python - <<'EOF'
+                    // 1. Jenkins 변수를 미리 쉘 환경변수(env)에 할당
+    env.PR_NUMBER = env.CHANGE_ID
+    env.REPO_PATH = "lyh4215/jenkins-study"
+    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
+
+    // 2. 이제 전체를 작은따옴표(''')로 감싸서 이스케이프 지옥에서 탈출!
+    sh '''
+        # 모든 $는 쉘 변수이므로 \를 붙일 필요가 없음
+        JSON_PAYLOAD=$(python3 - <<'EOF'
 import json, os
-data = {'body': os.environ['REPORT_DATA']}
+data = {'body': os.environ.get('REPORT_DATA', '')}
 print(json.dumps(data))
 EOF
-)
-                        curl -s -H "Authorization: token \$GITHUB_TOKEN" \
-                            -X POST \
-                            -H "Content-Type: application/json" \
-                            -d "$JSON_PAYLOAD" \
-                            "${apiUrl}"
-                    '''
+        )
+
+        curl -s -H "Authorization: token $GITHUB_TOKEN" \
+             -H "Content-Type: application/json" \
+             -X POST \
+             -d "$JSON_PAYLOAD" \
+             "https://api.github.com/repos/$REPO_PATH/issues/$PR_NUMBER/comments"
+    '''
                     }
                 }
             }
