@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.10-slim'
+            args '-u root:root'
+        }
+    }
     
     options {
         timestamps()
@@ -25,8 +30,6 @@ pipeline {
         stage('Setup Python') {
             steps {
                 sh '''
-                python -m venv venv
-                . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r app/requirements.txt --cache-dir .pip-cache
                 pip install pytest pytest-cov
@@ -38,7 +41,6 @@ pipeline {
             steps {
                 sh '''#!/usr/bin/env bash
                 set -euo pipefail
-                . venv/bin/activate
                 python - <<'EOF'
 from app.main import app
 print("FastAPI app import OK")
@@ -55,7 +57,6 @@ EOF
                 echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
-. venv/bin/activate
 
 pytest \
 --cov=app \
@@ -76,7 +77,6 @@ pytest \
                 echo "🧪 Running full test suite on main"
                 sh '''#!/usr/bin/env bash
 set -euo pipefail
-. venv/bin/activate
 pytest \
 --junitxml=reports/junit.xml \
 --cov=app \
