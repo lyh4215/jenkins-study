@@ -124,7 +124,7 @@ EOF
             expression { return env.CHANGE_ID != null }
         }
         steps {
-            withCredentials([usernamePassword(credentialsId: 'my-github-app', 
+            withCredentials([usernamePassword(credentialsId: 'jenkins-ci-app', 
                                                  passwordVariable: 'GITHUB_TOKEN', 
                                                  usernameVariable: 'GITHUB_APP_USER')]) {
                 script {
