@@ -136,7 +136,7 @@ EOF
                     def apiUrl = "https://api.github.com/repos/${repoFullName}/issues/${env.CHANGE_ID}/comments"
                     
                     // 2. JSON Body 생성 (Shell Injection 방지를 위해 single quote 사용)
-                    def commentBody = "### ✅ Coverage Report\n\n```\n${report}\n```"
+                    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
                     
                     // 3. 실행: ${GITHUB_TOKEN} 대신 \$GITHUB_TOKEN 을 써서 쉘 변수임을 명시 (보안 권장)
                     sh '''
