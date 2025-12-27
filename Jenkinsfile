@@ -26,15 +26,15 @@ pipeline {
             }
         }
 
-        stage('Setup Python') {
-            steps {
-                sh '''
-                pip install --upgrade pip
-                pip install -r app/requirements.txt --cache-dir .pip-cache
-                pip install pytest pytest-cov
-                '''
-            }
-        }
+        // stage('Setup Python') {
+        //     steps {
+        //         sh '''
+        //         pip install --upgrade pip
+        //         pip install -r app/requirements.txt --cache-dir .pip-cache
+        //         pip install pytest pytest-cov
+        //         '''
+        //     }
+        // }
 
         stage('FastAPI Import Test') {
             steps {
