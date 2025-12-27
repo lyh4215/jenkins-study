@@ -22,16 +22,6 @@ pipeline {
             }
         }
 
-        // stage('Setup Python') {
-        //     steps {
-        //         sh '''
-        //         pip install --upgrade pip
-        //         pip install -r app/requirements.txt --cache-dir .pip-cache
-        //         pip install pytest pytest-cov
-        //         '''
-        //     }
-        // }
-
         stage('Docker Phase') {
             agent {
                     docker {
@@ -59,13 +49,12 @@ EOF
                     steps {
                         echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
                         sh '''#!/usr/bin/env bash
-set -euo pipefail
-
-pytest \
---cov=app \
---cov-report=xml \
---cov-report=term
-                '''
+                        set -euo pipefail
+                        pytest \
+                        --cov=app \
+                        --cov-report=xml \
+                        --cov-report=term
+                        '''
                     }
                 }
 
@@ -85,7 +74,7 @@ pytest \
                         --cov=app \
                         --cov-report=xml \
                         --cov-report=term
-                '''
+                        '''
                     }
                 }
 
@@ -131,7 +120,7 @@ EOF
                                                         passwordVariable: 'GITHUB_TOKEN', 
                                                         usernameVariable: 'GITHUB_APP_USER')]) {
                         script {
-                        // 1. 데이터 준비 (Groovy 영역)
+                            // 1. 데이터 준비 (Groovy 영역)
                             def report = readFile('coverage.txt').trim()
                             env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
                             env.PR_NUMBER = env.CHANGE_ID
@@ -139,19 +128,19 @@ EOF
 
                             // 2. 실행 (Shell 영역) - 작은따옴표 3개 사용
                             sh '''
-                                JSON_PAYLOAD=$(python3 - <<'EOF'
+                            JSON_PAYLOAD=$(python3 - <<'EOF'
 import json, os
 data = {'body': os.environ.get('REPORT_DATA', '')}
 print(json.dumps(data))
 EOF
-)
+                            )
 
                             curl -s -H "Authorization: token $GITHUB_TOKEN" \
                                 -H "Content-Type: application/json" \
                                 -X POST \
                                 -d "$JSON_PAYLOAD" \
                                 "https://api.github.com/repos/$REPO_PATH/issues/$PR_NUMBER/comments"
-                        '''
+                            '''
                             }
                         }
                     }
@@ -186,16 +175,6 @@ EOF
                         
                         echo "Pushing Image..."
                         prodImage.push()
-                    //     sh '''#!/bin/bash
-                    //     echo "HELLO"
-                    //     # docker build -t lyh4215/jenkins-study-app:latest .
-                    //     # echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                    //     # docker push lyh4215/jenkins-study-app:latest
-                    //     # docker logout
-                    // '''
-                        sh '''
-                        echo "HI"
-                        '''
                     }
                 }
             }
@@ -224,15 +203,15 @@ EOF
 
     post {
         success {
-            echo '✅ Pipeline succeeded'
+            node('built-in') {echo '✅ Pipeline succeeded'}
         }
         failure {
-            echo '❌ Pipeline failed'
+            node('built-in') {echo '❌ Pipeline failed'}
         }
         unstable {
-            echo '⚠️ Pipeline unstable'
+            node('built-in') {echo '⚠️ Pipeline unstable'}
         }
-        always {
+        always { node('built-in') {
             archiveArtifacts artifacts: 'reports/*.xml', allowEmptyArchive: true
             archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
 
@@ -252,10 +231,10 @@ EOF
 
 
             echo "🏁 Build finished with status: ${currentBuild.currentResult}"
-        }
-        aborted {
+        }}
+        aborted {node('built-in') {
             echo '⛔ Deployment was aborted by user'
-        }
+        }}
 
     }
 }
