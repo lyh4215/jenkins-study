@@ -32,7 +32,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           . venv/bin/activate
-          pytest tests/test_main.py
+          pytest
         working-directory: app
 
       - name: Run tests (main)
