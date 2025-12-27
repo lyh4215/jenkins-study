@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'lyh4215/jenkins-ci-agent:latest'
-        }
-    }
+    agent none
     
     options {
         timestamps()
@@ -36,76 +32,84 @@ pipeline {
         //     }
         // }
 
-        stage('FastAPI Import Test') {
-            steps {
-                sh '''#!/usr/bin/env bash
-                set -euo pipefail
-                python - <<'EOF'
+        stage('Docker Phase') {
+            agent {
+                    docker {
+                    image 'lyh4215/jenkins-ci-agent:latest'
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+                }
+            }
+            stages {
+                stage('FastAPI Import Test') {
+                    steps {
+                        sh '''#!/usr/bin/env bash
+                        set -euo pipefail
+                        python - <<'EOF'
 from app.main import app
 print("FastAPI app import OK")
 EOF
+                        '''
+                    }
+                }
+
+                stage('PR Checks') {
+                    when {
+                        expression { env.IS_PR == 'true' }
+                    }
+                    steps {
+                        echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
+                        sh '''#!/usr/bin/env bash
+set -euo pipefail
+
+pytest \
+--cov=app \
+--cov-report=xml \
+--cov-report=term
                 '''
-            }
-        }
-
-        stage('PR Checks') {
-            when {
-                expression { env.IS_PR == 'true' }
-            }
-            steps {
-                echo "🔍 Running PR checks for PR #${env.CHANGE_ID}"
-                sh '''#!/usr/bin/env bash
-set -euo pipefail
-
-pytest \
---cov=app \
---cov-report=xml \
---cov-report=term
-        '''
-            }
-        }
-
-        stage('Main Branch Tests & Coverage') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { env.IS_PR == 'false' }
+                    }
                 }
-            }
-            steps {
-                echo "🧪 Running full test suite on main"
-                sh '''#!/usr/bin/env bash
-set -euo pipefail
-pytest \
---junitxml=reports/junit.xml \
---cov=app \
---cov-report=xml \
---cov-report=term
-        '''
-            }
-        }
 
-
-
-        stage('Test Report') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { env.IS_PR == 'false' }
+                stage('Main Branch Tests & Coverage') {
+                    when {
+                        allOf {
+                            branch 'main'
+                            expression { env.IS_PR == 'false' }
+                        }
+                    }
+                    steps {
+                        echo "🧪 Running full test suite on main"
+                        sh '''#!/usr/bin/env bash
+                        set -euo pipefail
+                        pytest \
+                        --junitxml=reports/junit.xml \
+                        --cov=app \
+                        --cov-report=xml \
+                        --cov-report=term
+                '''
+                    }
                 }
-            }
-            steps {
-                junit 'reports/junit.xml'
-            }
-        }
 
-        stage('Extract Coverage') {
-            when {
-                expression { env.IS_PR == 'true' }
-            }
-            steps {
-                sh '''
-                python - <<'EOF'
+
+
+                stage('Test Report') {
+                    when {
+                        allOf {
+                            branch 'main'
+                            expression { env.IS_PR == 'false' }
+                        }
+                    }
+                    steps {
+                        junit 'reports/junit.xml'
+                    }
+                }
+
+                stage('Extract Coverage') {
+                    when {
+                        expression { env.IS_PR == 'true' }
+                    }
+                    steps {
+                        sh '''
+                        python - <<'EOF'
 import xml.etree.ElementTree as ET
 
 root = ET.parse("coverage.xml").getroot()
@@ -114,47 +118,51 @@ line_rate = float(root.get("line-rate")) * 100
 with open("coverage.txt", "w") as f:
     f.write(f"{line_rate:.2f}")
 EOF
-                '''
-            }
-        }
+                        '''
+                    }
+                }
 
-            stage('Comment Coverage to PR') {
-        when {
-            expression { return env.CHANGE_ID != null }
-        }
-        steps {
-            withCredentials([usernamePassword(credentialsId: 'jenkins-ci-app', 
-                                                 passwordVariable: 'GITHUB_TOKEN', 
-                                                 usernameVariable: 'GITHUB_APP_USER')]) {
-                script {
-// 1. 데이터 준비 (Groovy 영역)
-    def report = readFile('coverage.txt').trim()
-    env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
-    env.PR_NUMBER = env.CHANGE_ID
-    env.REPO_PATH = "lyh4215/jenkins-study"
+                    stage('Comment Coverage to PR') {
+                when {
+                    expression { return env.CHANGE_ID != null }
+                }
+                steps {
+                    withCredentials([usernamePassword(credentialsId: 'jenkins-ci-app', 
+                                                        passwordVariable: 'GITHUB_TOKEN', 
+                                                        usernameVariable: 'GITHUB_APP_USER')]) {
+                        script {
+                        // 1. 데이터 준비 (Groovy 영역)
+                            def report = readFile('coverage.txt').trim()
+                            env.REPORT_DATA = "### ✅ Coverage Report\n\n```\n${report}\n```"
+                            env.PR_NUMBER = env.CHANGE_ID
+                            env.REPO_PATH = "lyh4215/jenkins-study"
 
-    // 2. 실행 (Shell 영역) - 작은따옴표 3개 사용
-    sh '''
-        JSON_PAYLOAD=$(python3 - <<'EOF'
+                            // 2. 실행 (Shell 영역) - 작은따옴표 3개 사용
+                            sh '''
+                                JSON_PAYLOAD=$(python3 - <<'EOF'
 import json, os
 data = {'body': os.environ.get('REPORT_DATA', '')}
 print(json.dumps(data))
 EOF
-        )
+)
 
-        curl -s -H "Authorization: token $GITHUB_TOKEN" \
-             -H "Content-Type: application/json" \
-             -X POST \
-             -d "$JSON_PAYLOAD" \
-             "https://api.github.com/repos/$REPO_PATH/issues/$PR_NUMBER/comments"
-    '''
+                            curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                                -H "Content-Type: application/json" \
+                                -X POST \
+                                -d "$JSON_PAYLOAD" \
+                                "https://api.github.com/repos/$REPO_PATH/issues/$PR_NUMBER/comments"
+                        '''
+                            }
+                        }
                     }
                 }
+
             }
         }
+        
 
         stage('Build & Push Production Image') {
-            agent any
+            agent { label 'built-in' }
             when {
                 allOf {
                     branch 'main'
@@ -169,27 +177,32 @@ EOF
                 )]) {
                 // Docker Hub 로그인을 위해 withCredentials 사용 가능
                     script {
-                        // // 1. 운영용 이미지 빌드
-                        // def prodImage = docker.build("lyh4215/jenkins-study-app:latest", "-f Dockerfile .")
+                        // 1. 운영용 이미지 빌드
+                        def prodImage = docker.build("lyh4215/jenkins-study-app:latest", "-f Dockerfile .")
                         
-                        // // 2. 푸시 (로그인 세션 필요)
-                        // echo "Attempting Docker Login..."
-                        // sh label : 'DockerLogin', scripts: 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        // 2. 푸시 (로그인 세션 필요)
+                        echo "Attempting Docker Login..."
+                        sh label : 'DockerLogin', script: 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                         
-                        // echo "Pushing Image..."
-                        // prodImage.push()
+                        echo "Pushing Image..."
+                        prodImage.push()
+                    //     sh '''#!/bin/bash
+                    //     echo "HELLO"
+                    //     # docker build -t lyh4215/jenkins-study-app:latest .
+                    //     # echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                    //     # docker push lyh4215/jenkins-study-app:latest
+                    //     # docker logout
+                    // '''
                         sh '''
-                        docker build -t lyh4215/jenkins-study-app:latest .
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker push lyh4215/jenkins-study-app:latest
-                        docker logout
-                    '''
+                        echo "HI"
+                        '''
                     }
                 }
             }
         }
 
         stage('Deploy (Approval)') {
+            agent { label 'built-in' }
             when {
                 allOf {
                     branch 'main'
