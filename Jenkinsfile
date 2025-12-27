@@ -153,6 +153,35 @@ EOF
             }
         }
 
+        stage('Build & Push Production Image') {
+            agent any
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.currentResult == 'SUCCESS' }
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId : 'docker-pat',
+                    passwordVariable: 'DOCKER_PASSWORD',
+                    usernameVariable: 'DOCKER_USERNAME'
+                )]) {
+                // Docker Hub 로그인을 위해 withCredentials 사용 가능
+                    script {
+                        // 1. 운영용 이미지 빌드
+                        def prodImage = docker.build("lyh4215/jenkins-study-app:latest", "-f Dockerfile .")
+                        
+                        // 2. 푸시 (로그인 세션 필요)
+                        echo "Attempting Docker Login..."
+                        sh label : 'DockerLogin', scripts: 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        
+                        echo "Pushing Image..."
+                        prodImage.push()
+                    }
+                }
+            }
+        }
 
         stage('Deploy (Approval)') {
             when {
